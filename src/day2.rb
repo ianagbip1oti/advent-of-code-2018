@@ -2,24 +2,27 @@
 
 INPUT = DATA.each_line.map(&:strip).to_a.freeze
 
-def part1
-
-  counts = INPUT.map do |line|
-    line.chars.group_by(&:itself).transform_values(&:size)
+class String
+  def count_letters
+    chars.group_by(&:itself).transform_values(&:size)
   end
 
-  twos = counts.select { |h| h.values.include? 2 }.size
-  threes = counts.select { |h| h.values.include? 3}.size
+  def diff(other)
+    chars.zip(other.chars).select { |a, b| a != b}.count
+  end
+end
+
+def part1
+  counts = INPUT.map(&:count_letters)
+
+  twos = counts.count { |h| h.has_value? 2}
+  threes = counts.count { |h| h.has_value? 3}
 
   p twos * threes
 end
 
-def diff(l, r)
-  l.chars.zip(r.chars).select { |a, b| a != b}.count
-end
-
 def part2
-  p INPUT.combination(2).select { |l, r| diff(l, r) == 1 }.flatten
+  p INPUT.combination(2).select { |l, r| l.diff(r) == 1 }.flatten
 end
 
 part1
