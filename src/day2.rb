@@ -3,14 +3,13 @@
 INPUT = DATA.each_line.map(&:strip).to_a.freeze
 
 def part1
-  twos = 0
-  threes = 0
 
-  INPUT.each do |line|
-    letters_count = line.chars.group_by(&:itself).transform_values(&:size)
-    twos += 1 if letters_count.values.include? 2
-    threes += 1 if letters_count.values.include? 3
+  counts = INPUT.map do |line|
+    line.chars.group_by(&:itself).transform_values(&:size)
   end
+
+  twos = counts.select { |h| h.values.include? 2 }.size
+  threes = counts.select { |h| h.values.include? 3}.size
 
   p twos * threes
 end
