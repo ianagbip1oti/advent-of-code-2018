@@ -15,8 +15,8 @@ end
 def part1
   counts = INPUT.map(&:count_letters)
 
-  twos = counts.count { |h| h.has_value? 2}
-  threes = counts.count { |h| h.has_value? 3}
+  twos = counts.count { |h| h.has_value? 2 }
+  threes = counts.count { |h| h.has_value? 3 }
 
   p twos * threes
 end
