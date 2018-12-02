@@ -7,13 +7,7 @@ def part1
   threes = 0
 
   INPUT.each do |line|
-    letters_count = {}
-
-    line.each_char do |c|
-      letters_count[c] = 0 unless letters_count[c]
-      letters_count[c] = letters_count[c] + 1
-    end
-    
+    letters_count = line.chars.group_by(&:itself).transform_values(&:size)
     twos += 1 if letters_count.values.include? 2
     threes += 1 if letters_count.values.include? 3
   end
@@ -26,9 +20,7 @@ def diff(l, r)
 end
 
 def part2
-  INPUT.each do |l1|
-    INPUT.each { |l2| p l1, l2 if diff(l1, l2 == 1) }
-  end
+  p INPUT.combination(2).select { |l, r| diff(l, r) == 1 }.flatten
 end
 
 part1
