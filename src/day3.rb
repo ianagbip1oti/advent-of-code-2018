@@ -2,7 +2,9 @@
 Point = Struct.new(:x, :y)
 
 Claim = Struct.new(:id, :x, :y, :w, :h) do
-  def each_point
+  include Enumerable
+
+  def each
     return unless block_given?
 
     (x...(x + w)).each do |xp|
@@ -30,6 +32,10 @@ Claim = Struct.new(:id, :x, :y, :w, :h) do
     true
   end
 
+  def find_overlaps(others)
+    others.select { |o| overlap? o }
+  end
+
   def self.parse(line)
     Claim.new *line.scan(/\d+/).map(&:to_i)
   end
@@ -40,8 +46,8 @@ INPUT = DATA.each_line.map { |l| Claim.parse l }.to_a.freeze
 def part1
   claimed = {}
 
-  claims = INPUT.each do |claim|
-    claim.each_point do |p|
+  INPUT.each do |claim|
+    claim.each do |p|
       claimed[p] = 0 unless claimed.has_key? p
       claimed[p] += 1
     end
@@ -51,18 +57,10 @@ def part1
 end
 
 def part2
-  INPUT.each do |candidate|
-    found_overlap = false
+  INPUT.each do |claim|
+    overlaps = claim.find_overlaps INPUT.select { |o| claim.id != o.id }
 
-    INPUT.each do |other|
-      next if candidate.id == other.id
-      next unless candidate.overlap? other
-
-      found_overlap = true
-      break
-    end
-
-    p candidate unless found_overlap
+    p claim if overlaps.empty?
   end
 end
 
