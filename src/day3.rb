@@ -1,5 +1,3 @@
-require 'ostruct'
-require 'strscan'
 
 Point = Struct.new(:x, :y)
 
