@@ -1,54 +1,55 @@
 require 'ostruct'
 require 'strscan'
 
-def parse_claim(line)
-  scan = StringScanner.new line
-  scan.scan_until /#/
-  id = scan.scan_until(/@/).to_i
-  x = scan.scan_until(/,/).to_i
-  y = scan.scan_until(/:/).to_i
-  w = scan.scan_until(/x/).to_i
-  h = scan.scan_until(/\w+/).to_i
+Point = Struct.new(:x, :y)
 
-  OpenStruct.new id: id, x: x, y: y, w: w, h: h
-end
+Claim = Struct.new(:id, :x, :y, :w, :h) do
+  def each_point
+    return unless block_given?
 
-INPUT = DATA.each_line.map(&:chomp).map { |l| parse_claim l }.to_a.freeze
-
-def part1
-  claimed_inches = {}
-
-  claims = INPUT.each do |c|
-    (c.x...(c.x + c.w)).each do |xc|
-      (c.y...(c.y + c.h)).each do |yc|
-        k = OpenStruct.new x: xc, y: yc
-        claimed_inches[k] = 0 unless claimed_inches.has_key? k
-        claimed_inches[k] += 1
+    (x...(x + w)).each do |xp|
+      (y...(y + h)).each do |yp|
+        yield Point.new xp, yp
       end
     end
   end
 
-  p claimed_inches.count { |k, v| v > 1 }
+  def top_left
+    Point.new x, y
+  end
+
+  def bottom_right
+    Point.new x + w - 1, y + h - 1
+  end
+
+  def overlap?(other)
+    return false if top_left.x > other.bottom_right.x
+    return false if other.top_left.x > bottom_right.x
+
+    return false if top_left.y > other.bottom_right.y
+    return false if other.top_left.y > bottom_right.y
+
+    true
+  end
+
+  def self.parse(line)
+    Claim.new *line.scan(/\d+/).map(&:to_i)
+  end
 end
 
-def bounding_box(claim)
-  top_left = OpenStruct.new x: claim.x, y: claim.y
-  bottom_right = OpenStruct.new x: claim.x + claim.w - 1, y: claim.y + claim.h - 1
+INPUT = DATA.each_line.map { |l| Claim.parse l }.to_a.freeze
 
-  OpenStruct.new top_left: top_left, bottom_right: bottom_right
-end
+def part1
+  claimed = {}
 
-def overlap?(l, r)
-  bb1 = bounding_box l
-  bb2 = bounding_box r
+  claims = INPUT.each do |claim|
+    claim.each_point do |p|
+      claimed[p] = 0 unless claimed.has_key? p
+      claimed[p] += 1
+    end
+  end
 
-  return false if bb1.top_left.x > bb2.bottom_right.x
-  return false if bb2.top_left.x > bb1.bottom_right.x
-
-  return false if bb1.top_left.y > bb2.bottom_right.y
-  return false if bb2.top_left.y > bb1.bottom_right.y
-
-  true
+  p claimed.count { |k, v| v > 1 }
 end
 
 def part2
@@ -57,7 +58,7 @@ def part2
 
     INPUT.each do |other|
       next if candidate.id == other.id
-      next unless overlap? candidate, other
+      next unless candidate.overlap? other
 
       found_overlap = true
       break
@@ -1359,4 +1360,3 @@ __END__
 #1285 @ 903,95: 25x29
 #1286 @ 161,810: 29x19
 #1287 @ 9,101: 23x21
-
