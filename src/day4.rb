@@ -23,7 +23,7 @@ def minutes
     end
   end
 
-  minutes
+  minutes #.map { |m| m.group_by(&:itself) }
 end
 
 MINUTES = minutes
