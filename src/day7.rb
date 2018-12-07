@@ -1,6 +1,4 @@
 
-require 'tsort'
-
 INPUT = DATA.map do |line|
   line.match(/Step (\w+) must be finished before step (\w+) can begin\./).captures
 end.to_a
