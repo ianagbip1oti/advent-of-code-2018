@@ -3,29 +3,44 @@ INPUT = DATA.map do |line|
   line.match(/Step (\w+) must be finished before step (\w+) can begin\./).captures
 end.to_a
 
-def dependency_graph
-  deps = Hash.new { |h, k| h[k] = [] }
+class DependencyGraph
+  attr_reader :graph
 
-  INPUT.each do |i|
-    v, k = *i
-    deps[k] << v
-    deps[v]
+  def initialize
+    @graph = Hash.new { |h, k| h[k] = [] }
+
+    INPUT.each do |i|
+      v, k = *i
+      @graph[k] << v
+      @graph[v]
+    end
   end
 
-  deps
+  def next_tasks
+    graph.select { |k, v| v.empty? }.keys.sort
+  end
+
+  def pop_task!
+    next_tasks.first.tap { |t| complete! t }
+  end
+
+  def complete!(t)
+    graph.delete t
+    graph.transform_values! { |v| v.delete(t); v }
+  end
+
+  def empty?
+    graph.empty?
+  end
 end
 
+
 def part1
-  deps = dependency_graph
+  dg = DependencyGraph.new
 
   order = ''
 
-  while !deps.empty?
-    n = deps.select { |k, v|  v.empty? }.keys.sort.first
-    order << n
-    deps.delete n
-    deps.transform_values! { |v| v.delete(n); v }
-  end
+  order << dg.pop_task! until dg.empty?
 
   p order
 end
@@ -35,39 +50,28 @@ def task_length(t)
 end
 
 def print_tasks(ms)
-  i = 0
-  ms.each do |m|
+  ms.each_with_index do |m, i|
     p "#{i}: #{m.join}" unless m.empty?
-    i += 1
   end
 end
 
 def part2
-  minutes = Array.new(1000) { [] }
-
-  deps = dependency_graph
+  dg = DependencyGraph.new
 
   minute = 0
-
+  minutes = Array.new(1000) { [] }
   complete_at = {}
 
-  while !deps.empty?
-    tasks = deps.select { |k, v| v.empty? && !minutes[minute].include?(k) }.keys.sort
-
-    tasks.each do |t|
+  while !dg.empty?
+    dg.next_tasks.reject { |k, v| minutes[minute].include?(k) }.each do |t|
       if minutes[minute].size < 5
-        (minute..minute + task_length(t) - 1).each do |idx|
-          minutes[idx] << t
-        end
+        (minute..minute + task_length(t) - 1).each { |m| minutes[m] << t }
         complete_at[t] = minute + task_length(t) - 1
       end
     end
     minute += 1
 
-    complete_at.select { |k, v| v < minute }.keys.each do |t| 
-      deps.delete(t)
-      deps.transform_values! { |v| v.delete(t); v }
-    end
+    complete_at.select { |k, v| v < minute }.keys.each { |t| dg.complete! t }
   end
 
   p minute
